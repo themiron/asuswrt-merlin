@@ -33,8 +33,6 @@
 
 extern struct nvram_tuple router_defaults[];
 
-#define PUSH_LAN_METRIC 500
-
 static int ovpn_waitfor(const char *name)
 {
 	int pid, n = 5;
@@ -863,12 +861,14 @@ void start_vpnserver(int serverNum)
 	sprintf(&buffer[0], "vpn_server%d_port", serverNum);
 	fprintf(fp, "port %d\n", nvram_get_int(&buffer[0]));
 
-	if((nvram_get_int("ddns_enable_x")) && (!nvram_match("ddns_server_x","CUSTOM")))
+	if(nvram_get_int("ddns_enable_x"))
 	{
 		if (nvram_match("ddns_server_x","WWW.NAMECHEAP.COM"))
 			fprintf(fp_client, "remote %s.%s %s\n", nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_username_x"), nvram_safe_get(&buffer[0]));
 		else
-			fprintf(fp_client, "remote %s %s\n", nvram_safe_get("ddns_hostname_x"), nvram_safe_get(&buffer[0]));
+			fprintf(fp_client, "remote %s %s\n",
+			    (strlen(nvram_safe_get("ddns_hostname_x")) ? nvram_safe_get("ddns_hostname_x") : nvram_safe_get("wan0_ipaddr")),
+			    nvram_safe_get(&buffer[0]));
 	}
 	else
 	{
@@ -949,9 +949,8 @@ void start_vpnserver(int serverNum)
 		{
 			sscanf(nvram_safe_get("lan_ipaddr"), "%d.%d.%d.%d", &ip[0], &ip[1], &ip[2], &ip[3]);
 			sscanf(nvram_safe_get("lan_netmask"), "%d.%d.%d.%d", &nm[0], &nm[1], &nm[2], &nm[3]);
-			fprintf(fp, "push \"route %d.%d.%d.%d %s vpn_gateway %d\"\n",
-				ip[0]&nm[0], ip[1]&nm[1], ip[2]&nm[2], ip[3]&nm[3],
-				nvram_safe_get("lan_netmask"), PUSH_LAN_METRIC);
+			fprintf(fp, "push \"route %d.%d.%d.%d %s\"\n", ip[0]&nm[0], ip[1]&nm[1], ip[2]&nm[2], ip[3]&nm[3],
+			        nvram_safe_get("lan_netmask"));
 		}
 
 		sprintf(&buffer[0], "vpn_server%d_ccd", serverNum);
@@ -1728,7 +1727,7 @@ void stop_vpn_eas()
 
 void stop_vpn_all()
 {
-	char buffer[16], *cur;
+	char buffer[16];
 	int i;
 
 	// stop servers
@@ -1981,7 +1980,6 @@ void update_vpnrouting(int unit){
 void reset_vpn_settings(int type, int unit){
         struct nvram_tuple *t;
         char prefix[]="vpn_serverX_", tmp[100];
-        char word[256], *next;
 	char *service;
 
 	if (type == 1)
