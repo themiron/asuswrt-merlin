@@ -1781,7 +1781,7 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 #endif
 	{
 		strcpy(dut_proto, "http://");
-		snprintf(dut_port, sizeof(dut_port), "%d", /*nvram_get_int("http_lanport") ? :*/ 80);
+		snprintf(dut_port, sizeof(dut_port), "%d", nvram_get_int("http_lanport") ? : 80);
 	}
 
 	if(strstr(url, "hotspot-detect") || strstr(url, "generate_204")){
