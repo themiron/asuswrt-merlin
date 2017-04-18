@@ -10,6 +10,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <string.h>
 #include <time.h>
@@ -32,6 +33,8 @@
 #define IF_SIZE 8
 
 extern struct nvram_tuple router_defaults[];
+
+#define PUSH_LAN_METRIC 500
 
 static int ovpn_waitfor(const char *name)
 {
@@ -256,6 +259,7 @@ void start_vpnclient(int clientNum)
 			fprintf(fp, "ncp-ciphers %s\n", buffer2);
 		} else {
 			nvi = 0;
+			fprintf(fp, "ncp-disable\n");
 		}
 	} else {
 		nvi = 0;
@@ -288,8 +292,10 @@ void start_vpnclient(int clientNum)
 	fprintf(fp, "route-up vpnrouting.sh\n");
 	fprintf(fp, "route-pre-down vpnrouting.sh\n");
 
-	nvi = nvram_get_int("vpn_loglevel");
-	if (nvi >= 0)
+	sprintf(&buffer[0], "vpn_client%d_verb", clientNum);
+	if( !nvram_is_empty(&buffer[0]) && (nvi = nvram_get_int(&buffer[0])) >= 0 )
+		fprintf(fp, "verb %d\n", nvi);
+	else if ( (nvi = nvram_get_int("vpn_loglevel")) >= 0 )
 		fprintf(fp, "verb %d\n", nvi);
 	else
 		fprintf(fp, "verb 3\n");
@@ -486,7 +492,9 @@ void start_vpnclient(int clientNum)
 		fprintf(fp, "#!/bin/sh\n");
 		fprintf(fp, "iptables -I INPUT -i %s -j ACCEPT\n", &iface[0]);
 		fprintf(fp, "iptables -I FORWARD %d -i %s -j ACCEPT\n", (nvram_match("cstats_enable", "1") ? 4 : 2), &iface[0]);
-		fprintf(fp, "iptables -t mangle -I PREROUTING -i %s -j MARK --set-mark 0x01/0x7\n", &iface[0]);
+		if (nvram_match("ctf_disable", "0")) {
+			fprintf(fp, "iptables -t mangle -I PREROUTING -i %s -j MARK --set-mark 0x01/0x7\n", &iface[0]);
+		}
 		// Setup traffic accounting
 		if (nvram_match("cstats_enable", "1")) {
 			ipt_account(fp, &iface[0]);
@@ -888,6 +896,7 @@ void start_vpnserver(int serverNum)
 			fprintf(fp_client, "ncp-ciphers %s\n", buffer2);
 		} else {
 			nvi = 0;
+			fprintf(fp, "ncp-disable\n");
 		}
 	} else {
 		nvi = 0;
@@ -930,7 +939,10 @@ void start_vpnserver(int serverNum)
 	fprintf(fp, "keepalive 15 60\n");
 	fprintf(fp_client, "keepalive 15 60\n");
 
-	if ( (nvi = nvram_get_int("vpn_loglevel")) >= 0 )
+	sprintf(&buffer[0], "vpn_server%d_verb", serverNum);
+	if( !nvram_is_empty(&buffer[0]) && (nvi = nvram_get_int(&buffer[0])) >= 0 )
+		fprintf(fp, "verb %d\n", nvi);
+	else if ( (nvi = nvram_get_int("vpn_loglevel")) >= 0 )
 		fprintf(fp, "verb %d\n", nvi);
 	else
 		fprintf(fp, "verb 3\n");
@@ -949,8 +961,9 @@ void start_vpnserver(int serverNum)
 		{
 			sscanf(nvram_safe_get("lan_ipaddr"), "%d.%d.%d.%d", &ip[0], &ip[1], &ip[2], &ip[3]);
 			sscanf(nvram_safe_get("lan_netmask"), "%d.%d.%d.%d", &nm[0], &nm[1], &nm[2], &nm[3]);
-			fprintf(fp, "push \"route %d.%d.%d.%d %s\"\n", ip[0]&nm[0], ip[1]&nm[1], ip[2]&nm[2], ip[3]&nm[3],
-			        nvram_safe_get("lan_netmask"));
+			fprintf(fp, "push \"route %d.%d.%d.%d %s vpn_gateway %d\"\n",
+				ip[0]&nm[0], ip[1]&nm[1], ip[2]&nm[2], ip[3]&nm[3],
+				nvram_safe_get("lan_netmask"), PUSH_LAN_METRIC);
 		}
 
 		sprintf(&buffer[0], "vpn_server%d_ccd", serverNum);
@@ -1098,12 +1111,14 @@ void start_vpnserver(int serverNum)
 			}
 		}
 
-		fprintf(fp_client, "ns-cert-type server\n");
+		fprintf(fp_client, "remote-cert-tls server\n");
 		//sprintf(&buffer[0], "vpn_crt_server%d_ca", serverNum);
 		//if ( !ovpn_crt_is_empty(&buffer[0]) )
 			fprintf(fp, "ca ca.crt\n");
-		//sprintf(&buffer[0], "vpn_crt_server%d_dh", serverNum);
-		//if ( !ovpn_crt_is_empty(&buffer[0]) )
+		sprintf(&buffer[0], "vpn_crt_server%d_dh", serverNum);
+		if ( !strncmp(get_parsed_crt(&buffer[0], buffer2, sizeof(buffer2)), "none", 4))
+			fprintf(fp, "dh none\n");
+		else
 			fprintf(fp, "dh dh.pem\n");
 		//sprintf(&buffer[0], "vpn_crt_server%d_crt", serverNum);
 		//if ( !ovpn_crt_is_empty(&buffer[0]) )
@@ -1358,15 +1373,17 @@ void start_vpnserver(int serverNum)
 			fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2, sizeof(buffer2)));
 			fclose(fp);
 			valid = 1;	// Tentative state
-
-			// Validate DH strength
-			sprintf(&buffer[0], "/usr/sbin/openssl dhparam -in /etc/openvpn/server%d/dh.pem -text | grep \"DH Parameters:\" > /tmp/output.txt", serverNum);
-			system(&buffer[0]);
-			if (f_read_string("/tmp/output.txt", &buffer[0], 64) > 0) {
-				if (sscanf(strstr(&buffer[0],"DH Parameters"),"DH Parameters: (%d bit)", &i)) {
-					if (i < 1024) {
-						logmessage("openvpn","WARNING: DH for server %d is too weak (%d bit, must be at least 1024 bit). Using a pre-generated 2048-bit PEM.", serverNum, i);
-						valid = 0;      // Not valid after all, must regenerate
+			if (strncmp(buffer2, "none", 4))	// If not set to "none" then validate it
+			{
+				// Validate DH strength
+				sprintf(&buffer[0], "/usr/sbin/openssl dhparam -in /etc/openvpn/server%d/dh.pem -text | grep \"DH Parameters:\" > /tmp/output.txt", serverNum);
+				system(&buffer[0]);
+				if (f_read_string("/tmp/output.txt", &buffer[0], 64) > 0) {
+					if (sscanf(strstr(&buffer[0],"DH Parameters"),"DH Parameters: (%d bit)", &i)) {
+						if (i < 1024) {
+							logmessage("openvpn","WARNING: DH for server %d is too weak (%d bit, must be at least 1024 bit). Using a pre-generated 2048-bit PEM.", serverNum, i);
+							valid = 0;      // Not valid after all, must regenerate
+						}
 					}
 				}
 			}
@@ -1477,7 +1494,8 @@ void start_vpnserver(int serverNum)
 		{
 			fprintf(fp, "iptables -I INPUT -i %s -j ACCEPT\n", &iface[0]);
 			fprintf(fp, "iptables -I FORWARD %d -i %s -j ACCEPT\n", (nvram_match("cstats_enable", "1") ? 4 : 2), &iface[0]);
-			fprintf(fp, "iptables -t mangle -I PREROUTING -i %s -j MARK --set-mark 0x01/0x7\n", &iface[0]);
+			if (nvram_match("ctf_disable", "0"))
+				fprintf(fp, "iptables -t mangle -I PREROUTING -i %s -j MARK --set-mark 0x01/0x7\n", &iface[0]);
 		}
 		if (nvram_match("cstats_enable", "1")) {
 			ipt_account(fp, &iface[0]);

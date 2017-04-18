@@ -1083,10 +1083,12 @@ function edit_confirm(){
 		onEditClient[5] = "";
 
 		for(var i=0; i<originalCustomListArray.length; i++){
-			if(originalCustomListArray[i].split('>')[1] == onEditClient[1]){
-				onEditClient[4] = originalCustomListArray[i].split('>')[4]; // set back callback for ROG device
-				onEditClient[5] = originalCustomListArray[i].split('>')[5]; // set back keeparp for ROG device
-				originalCustomListArray.splice(i, 1); // remove the selected client from original list
+			if(originalCustomListArray[i].split('>')[1] != undefined) {
+				if(originalCustomListArray[i].split('>')[1].toUpperCase() == onEditClient[1].toUpperCase()){
+					onEditClient[4] = originalCustomListArray[i].split('>')[4]; // set back callback for ROG device
+					onEditClient[5] = originalCustomListArray[i].split('>')[5]; // set back keeparp for ROG device
+					originalCustomListArray.splice(i, 1); // remove the selected client from original list
+				}
 			}
 		}
 
@@ -1690,7 +1692,7 @@ function popupEditBlock(clientObj){
 }
 
 function check_usb3(){
-	if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "RT-N18U" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R"){
+	if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "RT-N18U" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC58U"  || based_modelid == "RT-AC82U"){
 		document.getElementById('usb1_image').src = "images/New_ui/networkmap/USB3.png";
 	}
 	else if(based_modelid == "RT-N65U"){
@@ -2302,8 +2304,8 @@ function closeClientDetailView() {
 		<td align="left" valign="top" class="bgarrow">
 		
 		<!--=====Beginning of Network Map=====-->
-		<div id="tabMenu"></div><br>
-		<div id="NM_shift" style="margin-top:-155px;"></div>
+		<div id="tabMenu"></div>
+		<div id="NM_shift" style="margin-top:-140px;"></div>
 		<div id="NM_table" class="NM_table" >
 		<div id="NM_table_div">
 			<table id="_NM_table" border="0" cellpadding="0" cellspacing="0" height="720" style="opacity:.95;" >

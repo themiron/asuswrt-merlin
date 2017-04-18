@@ -601,7 +601,7 @@ function addRow_Group(upper){
 	var password_obj = document.form.vpn_server_clientlist_password;
 	var rule_num = document.getElementById("openvpnd_clientlist_table").rows.length;
 	var item_num = document.getElementById("openvpnd_clientlist_table").rows[0].cells.length;		
-	if(rule_num >= upper + 1) {
+	if(rule_num >= upper) {
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 		return false;	
 	}
@@ -1177,7 +1177,7 @@ function defaultSettings() {
 									</td>
 								</tr>
 								<tr id="edit_tls4">
-									<th><#vpn_openvpn_KC_DH#></th>
+									<th><#vpn_openvpn_KC_DH#><br>(enter "none" to disable)</th>
 									<td>
 										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server_dh" name="edit_vpn_crt_server_dh" cols="65" maxlength="3999"></textarea>
 									</td>
@@ -1590,9 +1590,9 @@ function defaultSettings() {
 												</td>
 											</tr>
 											<tr>
-												<th>Global Log verbosity</th>
+												<th>Log verbosity</th>
 												<td>
-													<input type="text" maxlength="2" class="input_6_table"name="vpn_loglevel" onKeyPress="return validator.isNumber(this,event);"onblur="validate_number_range(this, 0, 11)" value="<% nvram_get("vpn_loglevel"); %>">
+													<input type="text" maxlength="2" class="input_6_table"name="vpn_server_verb" onKeyPress="return validator.isNumber(this,event);"onblur="validate_number_range(this, 0, 11)" value="<% nvram_get("vpn_server_verb"); %>">
 													<span style="color:#FC0">(Between 0 and 11. Default: 3)</span>
 												</td>
 											</tr>

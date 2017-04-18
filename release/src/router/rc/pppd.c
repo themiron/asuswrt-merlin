@@ -167,7 +167,7 @@ start_pppd(int unit)
 			fprintf(fp, "-pap\n");
 		}
 
-		if (nvram_match("dsl0_proto", "pppoa")) {
+		if (nvram_match("dslx_transmode", "atm") && nvram_match("dsl0_proto", "pppoa")) {
 			FILE *fp_dsl_mac;
 			char *dsl_mac = NULL;
 			int timeout = 10; /* wait up to 10 seconds */
@@ -244,9 +244,7 @@ start_pppd(int unit)
 #endif
 		if (nvram_match(ipv6_nvname_by_unit("ipv6_ifdev", unit), "ppp")
 #ifdef RTCONFIG_DUALWAN
-			&& !(!strstr(nvram_safe_get("wans_dualwan"), "none") &&
-			     !strcmp(nvram_safe_get("wans_mode"), "lb") &&
-			     unit != wan_primary_ifunit())
+			&& (unit == wan_primary_ifunit_ipv6())
 #endif
 		)
 			fprintf(fp, "+ipv6\n");
