@@ -1904,8 +1904,8 @@ iptables-1.4.21: iptables-1.4.21/Makefile
 iptables-1.4.21-install: iptables-1.4.21
 	install -D iptables-1.4.21/iptables/.libs/xtables-multi $(INSTALLDIR)/iptables-1.4.21/usr/sbin/xtables-multi
 	cd $(INSTALLDIR)/iptables-1.4.21/usr/sbin && \
-		ln -sf xtables-multi iptables-restore && \
 		ln -sf xtables-multi iptables-save && \
+		ln -sf xtables-multi iptables-restore && \
 		ln -sf xtables-multi iptables
 	install -d $(INSTALLDIR)/iptables-1.4.21/usr/lib/xtables
 	install -D iptables-1.4.21/libiptc/.libs/libiptc.so $(INSTALLDIR)/iptables-1.4.21/usr/lib/libiptc.so
@@ -1944,7 +1944,6 @@ iptables-1.4.x-install: iptables-1.4.x
 	cd $(INSTALLDIR)/iptables-1.4.x/usr/sbin && \
 		ln -sf xtables-multi iptables-save && \
 		ln -sf xtables-multi iptables-restore && \
-		ln -sf xtables-multi iptables-save && \
 		ln -sf xtables-multi iptables
 	install -d $(INSTALLDIR)/iptables-1.4.x/usr/lib/xtables
 	install -D iptables-1.4.x/libiptc/.libs/libiptc.so $(INSTALLDIR)/iptables-1.4.x/usr/lib/libiptc.so
@@ -1962,6 +1961,7 @@ iptables-1.4.x-install: iptables-1.4.x
 
 ifeq ($(RTCONFIG_IPV6),y)
 	cd $(INSTALLDIR)/iptables-1.4.x/usr/sbin && \
+		ln -sf xtables-multi ip6tables-save && \
 		ln -sf xtables-multi ip6tables-restore && \
 		ln -sf xtables-multi ip6tables
 	install -D iptables-1.4.x/libiptc/.libs/libip6tc.so $(INSTALLDIR)/iptables-1.4.x/usr/lib/libip6tc.so
