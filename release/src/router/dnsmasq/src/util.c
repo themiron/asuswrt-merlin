@@ -250,11 +250,11 @@ unsigned char *do_rfc1035_name(unsigned char *p, char *sval)
 /* for use during startup */
 void *safe_malloc(size_t size)
 {
-  void *ret = malloc(size);
+  void *ret = calloc(1, size);
   
   if (!ret)
     die(_("could not get memory"), NULL, EC_NOMEM);
-     
+      
   return ret;
 }    
 
@@ -268,11 +268,11 @@ void safe_pipe(int *fd, int read_noblock)
 
 void *whine_malloc(size_t size)
 {
-  void *ret = malloc(size);
+  void *ret = calloc(1, size);
 
   if (!ret)
     my_syslog(LOG_ERR, _("failed to allocate %d bytes"), (int) size);
-
+  
   return ret;
 }
 
@@ -329,7 +329,7 @@ int hostname_isequal(const char *a, const char *b)
   
   return 1;
 }
-    
+
 time_t dnsmasq_time(void)
 {
 #ifdef HAVE_BROKEN_RTC
@@ -379,7 +379,7 @@ int is_same_net6(struct in6_addr *a, struct in6_addr *b, int prefixlen)
   return 0;
 }
 
-/* return least signigicant 64 bits if IPv6 address */
+/* return least significant 64 bits if IPv6 address */
 u64 addr6part(struct in6_addr *addr)
 {
   int i;
@@ -503,6 +503,10 @@ int parse_hex(char *in, unsigned char *out, int maxlen,
 			  sav = in[(j+1)*2];
 			  in[(j+1)*2] = 0;
 			}
+		      /* checks above allow mix of hexdigit and *, which
+			 is illegal. */
+		      if (strchr(&in[j*2], '*'))
+			return -1;
 		      out[i] = strtol(&in[j*2], NULL, 16);
 		      mask = mask << 1;
 		      i++;
