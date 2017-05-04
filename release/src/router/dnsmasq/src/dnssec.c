@@ -493,9 +493,9 @@ int setup_timestamp(void)
 
 	  close(fd);
 	  
-	  tv[0].tv_sec = timestamp_time = 1420070400; /* 1-1-2015 */
-	  tv[0].tv_usec = 0;
-	  tv[1] = tv[0];
+	  timestamp_time = 1420070400; /* 1-1-2015 */
+	  tv[0].tv_sec = tv[1].tv_sec = timestamp_time;
+	  tv[0].tv_usec = tv[1].tv_usec = 0;
 	  if (utimes(daemon->timestamp_file, tv) == 0)
 	    goto check_and_exit;
 	}
