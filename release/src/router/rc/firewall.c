@@ -2384,6 +2384,7 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	    ":INPUT ACCEPT [0:0]\n"
 	    ":FORWARD %s [0:0]\n"
 	    ":OUTPUT ACCEPT [0:0]\n"
+	    ":INPUT_ICMP - [0:0]\n"
 	    ":FUPNP - [0:0]\n"
 	    ":SECURITY - [0:0]\n"
 #ifdef RTCONFIG_PARENTALCTRL
@@ -2606,9 +2607,12 @@ TRACE_PT("writing Parental Control\n");
 			if (ip && *ip && inet_addr_(ip) != INADDR_ANY)
 				fprintf(fp, "-A INPUT -s %s -p icmp --icmp-type 8 -j %s\n", ip, logaccept);
 #endif
-			fprintf(fp, "-A INPUT -p icmp ! --icmp-type 8 -j %s\n", logaccept);
+			fprintf(fp, "-A %s -p icmp -j %s\n", "INPUT", "INPUT_ICMP");
+			fprintf(fp, "-A %s -p icmp --icmp-type %d -j %s\n", "INPUT_ICMP", 8, "RETURN");
+			fprintf(fp, "-A %s -p icmp --icmp-type %d -j %s\n", "INPUT_ICMP", 13, "RETURN");
+			fprintf(fp, "-A %s -p icmp -j %s\n", "INPUT_ICMP", logaccept);
 		} else
-			fprintf(fp, "-A INPUT -p icmp -j %s\n", logaccept);
+			fprintf(fp, "-A %s -p icmp -j %s\n", "INPUT", logaccept);
 
 		if (!nvram_match("misc_lpr_x", "0"))
 		{
@@ -3380,6 +3384,7 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	    ":INPUT ACCEPT [0:0]\n"
 	    ":FORWARD %s [0:0]\n"
 	    ":OUTPUT ACCEPT [0:0]\n"
+	    ":INPUT_ICMP - [0:0]\n"
 	    ":FUPNP - [0:0]\n"
 	    ":SECURITY - [0:0]\n"
 #ifdef RTCONFIG_PARENTALCTRL
@@ -3639,9 +3644,12 @@ TRACE_PT("writing Parental Control\n");
 			if (ip && *ip && inet_addr_(ip) != INADDR_ANY)
 				fprintf(fp, "-A INPUT -s %s -p icmp --icmp-type 8 -j %s\n", ip, logaccept);
 #endif
-			fprintf(fp, "-A INPUT -p icmp ! --icmp-type 8 -j %s\n", logaccept);
+			fprintf(fp, "-A %s -p icmp -j %s\n", "INPUT", "INPUT_ICMP");
+			fprintf(fp, "-A %s -p icmp --icmp-type %d -j %s\n", "INPUT_ICMP", 8, "RETURN");
+			fprintf(fp, "-A %s -p icmp --icmp-type %d -j %s\n", "INPUT_ICMP", 13, "RETURN");
+			fprintf(fp, "-A %s -p icmp -j %s\n", "INPUT_ICMP", logaccept);
 		} else
-			fprintf(fp, "-A INPUT -p icmp -j %s\n", logaccept);
+			fprintf(fp, "-A %s -p icmp -j %s\n", "INPUT", logaccept);
 
 		if (!nvram_match("misc_lpr_x", "0"))
 		{
