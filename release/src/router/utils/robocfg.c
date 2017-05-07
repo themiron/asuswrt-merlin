@@ -790,25 +790,28 @@ main(int argc, char *argv[])
 	printf("Switch: %sabled %s\n", robo_read16(&robo, ROBO_CTRL_PAGE, ROBO_SWITCH_MODE) & 2 ? "en" : "dis",
 		    robo.gmii ? "gigabit" : "");
 
-	for (i = 0; i < 6; i++) {
-		printf(robo_read16(&robo, ROBO_STAT_PAGE, ROBO_LINK_STAT_SUMMARY) & (1 << port[i]) ?
+	for (i = 0; i <= 8; i++) {
+		if (i < 8 && ((robo535x < 4 && i > 4) || (robo535x < 5 && i > 5) || (robo535x == 5 && i == 6)))
+			continue;
+		printf(robo_read16(&robo, ROBO_STAT_PAGE, ROBO_LINK_STAT_SUMMARY) & (1 << i) ?
 			"Port %d: %4s%s " : "Port %d:   DOWN ",
-			(robo535x >= 4) ? port[i] : i,
+			(robo535x >= 4) ? i : ports[i] - '0',
 			speed[(robo535x >= 4) ?
-				(robo_read32(&robo, ROBO_STAT_PAGE, ROBO_SPEED_STAT_SUMMARY) >> port[i] * 2) & 3 :
-				(robo_read16(&robo, ROBO_STAT_PAGE, ROBO_SPEED_STAT_SUMMARY) >> port[i]) & 1],
+				(robo_read32(&robo, ROBO_STAT_PAGE, ROBO_SPEED_STAT_SUMMARY) >> i * 2) & 3 :
+				(robo_read16(&robo, ROBO_STAT_PAGE, ROBO_SPEED_STAT_SUMMARY) >> i) & 1],
 			robo_read16(&robo, ROBO_STAT_PAGE, (robo535x >= 4) ?
-				ROBO_DUPLEX_STAT_SUMMARY_53115 : ROBO_DUPLEX_STAT_SUMMARY) & (1 << port[i]) ? "FD" : "HD");
+				ROBO_DUPLEX_STAT_SUMMARY_53115 : ROBO_DUPLEX_STAT_SUMMARY) & (1 << i) ? "FD" : "HD");
 
-		val16 = robo_read16(&robo, ROBO_CTRL_PAGE, port[i]);
+		val16 = robo_read16(&robo, ROBO_CTRL_PAGE, i);
 
 		printf("%s stp: %s vlan: %d ", rxtx[val16 & 3], stp[(val16 >> 5) & 7],
-			robo_read16(&robo, ROBO_VLAN_PAGE, ROBO_VLAN_PORT0_DEF_TAG + (i << 1)));
+			robo_read16(&robo, ROBO_VLAN_PAGE, ROBO_VLAN_PORT0_DEF_TAG +
+				(((robo535x >= 4) ? i : ports[i] - '0') << 1)));
 
 		if (robo535x >= 4)
-			printf("jumbo: %s ", jumbo[(robo_read32(&robo, ROBO_JUMBO_PAGE, ROBO_JUMBO_CTRL) >> port[i]) & 1]);
+			printf("jumbo: %s ", jumbo[(robo_read32(&robo, ROBO_JUMBO_PAGE, ROBO_JUMBO_CTRL) >> i) & 1]);
 
-		robo_read(&robo, ROBO_STAT_PAGE, ROBO_LSA_PORT0 + port[i] * 6, mac, 3);
+		robo_read(&robo, ROBO_STAT_PAGE, ROBO_LSA_PORT0 + i * 6, mac, 3);
 
 		printf("mac: %02x:%02x:%02x:%02x:%02x:%02x\n",
 			mac[2] >> 8, mac[2] & 255, mac[1] >> 8, mac[1] & 255, mac[0] >> 8, mac[0] & 255);
