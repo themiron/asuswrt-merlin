@@ -449,7 +449,7 @@ main(int argc, char *argv[])
 		if (strcasecmp(argv[i], "showmacs") == 0)
 		{
 			/* show MAC table of switch */
-			u16 buf[6];
+			u16 buf[6], r;
 			int idx, off, base_vlan;
 
 			base_vlan = 0; /*get_vid_by_idx(&robo, 0);*/
@@ -461,15 +461,25 @@ main(int argc, char *argv[])
 			robo_write16(&robo, ROBO_ARLIO_PAGE, ROBO_ARL_RW_CTRL, 0x81);
 			robo_write16(&robo, ROBO_ARLIO_PAGE, (robo535x >= 4) ?
 			    ROBO_ARL_SEARCH_CTRL_53115 : ROBO_ARL_SEARCH_CTRL, 0x80);
+
 			for (idx = 0; idx < ((robo535x >= 4) ?
 				NUM_ARL_TABLE_ENTRIES_53115 : robo535x ?
 				NUM_ARL_TABLE_ENTRIES_5350 : NUM_ARL_TABLE_ENTRIES); idx++)
 			{
-				if (robo535x >= 4)
-				{
+				if (robo535x >= 4) {
 					off = (idx & 0x01) << 4;
-					if (!off && (robo_read16(&robo, ROBO_ARLIO_PAGE,
-					    ROBO_ARL_SEARCH_CTRL_53115) & 0x80) == 0) break;
+					if (!off) {
+						j = 0;
+					again:
+						r = robo_read16(&robo, ROBO_ARLIO_PAGE,
+								ROBO_ARL_SEARCH_CTRL_53115);
+						if ((r & 0x80) == 0) break;
+						if ((r & 0x01) == 0) {
+							if (++j >= 10) break;
+							usleep(200);
+							goto again;
+						}
+					}
 					robo_read(&robo, ROBO_ARLIO_PAGE,
 					    ROBO_ARL_SEARCH_RESULT_53115 + off, buf, 4);
 					robo_read(&robo, ROBO_ARLIO_PAGE,
