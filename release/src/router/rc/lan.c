@@ -1464,10 +1464,13 @@ void start_lan(void)
 			eval("brctl", "stp", lan_ifname, "0");
 #endif
 
-		if (!strcmp(lan_ifname, "br0")) {
-			snprintf(tmp, sizeof (tmp), "%d", nvram_get_int("lan_brsnoop"));
-			f_write_string("/sys/class/net/br0/bridge/multicast_snooping", tmp, 0, 0);
-		}
+		snprintf(word, sizeof(word), "%d",
+#ifdef RTCONFIG_EMF
+			nvram_get_int("emf_enable") ? 0 :
+#endif
+			nvram_get_int("lan_brsnoop"));
+		snprintf(tmp, sizeof(tmp), "/sys/class/net/%s/bridge/multicast_snooping", lan_ifname);
+		f_write_string(tmp, word, 0, 0);
 
 		set_iface_ps(lan_ifname, 3);
 
