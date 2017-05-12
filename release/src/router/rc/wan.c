@@ -731,14 +731,9 @@ start_igmpproxy(char *wan_ifname)
 	}
 
 	fprintf(fp, "# automagically generated from web settings\n");
-#ifdef RTCONFIG_MULTICAST_IPTV
-	if ( !(nvram_get_int("switch_stb_x") > 6 &&
-		nvram_match("switch_wantag", "movistar")) )
+	if (nvram_get_int("mr_qleave_x"))
 		fprintf(fp, "quickleave\n\n");
-#else
-		fprintf(fp, "quickleave\n\n");
-#endif
-		fprintf(fp, "phyint %s upstream  ratelimit 0  threshold 1\n"
+	fprintf(fp, "phyint %s upstream  ratelimit 0  threshold 1\n"
 		"\taltnet %s\n\n"
 		"phyint %s downstream  ratelimit 0  threshold 1\n\n",
 		wan_ifname,

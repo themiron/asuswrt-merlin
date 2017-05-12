@@ -1076,6 +1076,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "sr_rulelist", "" },
 	{ "dr_enable_x", "1" }, // oleg patch
 	{ "mr_enable_x", "0" }, // oleg patch
+	{ "mr_qleave_x", "0" },
 	{ "mr_altnet_x", "" },
 
 	// Domain Name
