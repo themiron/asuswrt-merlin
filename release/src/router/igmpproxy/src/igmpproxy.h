@@ -50,6 +50,7 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
+#include <time.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
