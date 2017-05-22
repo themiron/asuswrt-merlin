@@ -113,11 +113,18 @@ OpenAndConfSSDPReceiveSocket(void)
 	memset(&sockname, 0, sizeof(struct sockaddr_in));
 	sockname.sin_family = AF_INET;
 	sockname.sin_port = htons(SSDP_PORT);
+#ifdef __linux__
 	/* NOTE: Binding a socket to a UDP multicast address means, that we just want
 	 * to receive datagramms send to this multicast address.
 	 * To specify the local nics we want to use we have to use setsockopt,
 	 * see AddMulticastMembership(...). */
 	sockname.sin_addr.s_addr = inet_addr(SSDP_MCAST_ADDR);
+#else
+	/* NOTE: Binding to SSDP_MCAST_ADDR on Darwin & *BSD causes NOTIFY replies are
+	 * sent from SSDP_MCAST_ADDR what forces some clients to ignore subsequent
+	 * unsolicited NOTIFY packets from the real interface address. */
+	sockname.sin_addr.s_addr = htonl(INADDR_ANY);
+#endif
 
 	if (bind(s, (struct sockaddr *)&sockname, sizeof(struct sockaddr_in)) < 0)
 	{
