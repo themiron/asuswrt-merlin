@@ -1427,7 +1427,9 @@ oldconfig oldconf: koldconf roldconf bboldconf
 #
 
 busybox: dummy
-	@$(MAKE) -C busybox EXTRA_CFLAGS="-fPIC $(EXTRACFLAGS)" $(PARALLEL_BUILD)
+	@$(MAKE) -C busybox $(PARALLEL_BUILD) \
+		EXTRA_CFLAGS="-fPIC $(EXTRACFLAGS) \
+			$(if $(RTCONFIG_PROTECTION_SERVER),-DSECURITY_NOTIFY,)"
 
 # V=1
 
