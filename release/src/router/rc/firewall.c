@@ -1935,7 +1935,7 @@ static void write_access_restriction(FILE *fp)
 		if (en != 1)
 #endif
 		{
-			http_port = 80;
+			http_port = nvram_get_int("http_lanport") ? : 80;
 		}
 		if (http_port != 0 && https_port != 0)
 			snprintf(webports, sizeof(webports), "%d,%d", http_port, https_port);
