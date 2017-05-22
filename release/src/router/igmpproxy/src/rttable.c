@@ -695,7 +695,7 @@ void logRouteTable(char *header) {
         struct RouteTable*  croute = routing_table;
         struct OriginAddr  *addr;
         unsigned            rcount = 0;
-        int i;
+	int i;
     
         my_log(LOG_DEBUG, 0, "");
         my_log(LOG_DEBUG, 0, "Current routing table (%s):", header);
