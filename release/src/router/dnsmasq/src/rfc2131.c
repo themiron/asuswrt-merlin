@@ -695,12 +695,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 	borken_opt = 1;
       else
 	daemon->dhcp_buff[len] = 0;
-      if (legal_hostname(daemon->dhcp_buff) &&
-	  strcmp(daemon->dhcp_buff, "localhost") != 0
-#ifndef HAVE_IPV6
-	  && strcmp(daemon->dhcp_buff, "ip6-localhost") != 0
-#endif
-	)
+      if (legal_hostname(daemon->dhcp_buff))
 	client_hostname = daemon->dhcp_buff;
     }
 
