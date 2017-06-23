@@ -1468,14 +1468,6 @@ void start_lan(void)
 			eval("brctl", "stp", lan_ifname, "0");
 #endif
 
-		snprintf(word, sizeof(word), "%d",
-#ifdef RTCONFIG_EMF
-			nvram_get_int("emf_enable") ? 0 :
-#endif
-			nvram_get_int("lan_brsnoop"));
-		snprintf(tmp, sizeof(tmp), "/sys/class/net/%s/bridge/multicast_snooping", lan_ifname);
-		f_write_string(tmp, word, 0, 0);
-
 		set_iface_ps(lan_ifname, 3);
 
 #ifdef RTCONFIG_IPV6
