@@ -1341,6 +1341,21 @@ void FAST_FUNC show_history(const line_input_t *st)
 		printf("%4d %s\n", i, st->history[i]);
 }
 
+/* Clears command history. Used by shell 'history' builtins */
+void FAST_FUNC clear_history(line_input_t *st)
+{
+	int i;
+
+	if (!st)
+		return;
+
+	for (i = 0; i < st->cnt_history; i++) {
+		free(st->history[i]);
+		st->history[i] = NULL;
+	}
+	st->cur_history = st->cnt_history = 0;
+}
+
 # if ENABLE_FEATURE_EDITING_SAVEHISTORY
 /* We try to ensure that concurrent additions to the history
  * do not overwrite each other.

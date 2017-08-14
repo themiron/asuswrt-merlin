@@ -1154,7 +1154,7 @@ void redirect_nat_setting(void)
 void repeater_nat_setting(){
 	FILE *fp;
 	char *lan_ip = nvram_safe_get("lan_ipaddr");
-	int lan_port = /*nvram_get_int("http_lanport") ? :*/ 80;
+	int lan_port = nvram_get_int("http_lanport") ? : 80;
 	char name[PATH_MAX];
 
 	sprintf(name, "%s_repeater", NAT_RULES);
@@ -1205,14 +1205,14 @@ void repeater_filter_setting(int mode){
 
 				fprintf(fp, "-A INPUT -i %s -m mark --mark %s -d %s -p tcp -m multiport --dport 23,%d,%d,9999 -j DROP\n",
 						word, BIT_RES_GUI, nvram_safe_get("lan_ipaddr"),
-						/*nvram_get_int("http_lanport") ? :*/ 80,
+						nvram_get_int("http_lanport") ? : 80,
 						nvram_get_int("https_lanport") ? : 443);
 			}
 		}
 		else{
 			fprintf(fp, "-A INPUT -i %s -m mark --mark %s -d %s -p tcp -m multiport --dport 23,%d,%d,9999 -j DROP\n",
 					nvram_safe_get("lan_ifname"), BIT_RES_GUI, nvram_safe_get("lan_ipaddr"),
-					/*nvram_get_int("http_lanport") ? :*/ 80,
+					nvram_get_int("http_lanport") ? : 80,
 					nvram_get_int("https_lanport") ? : 443);
 		}
 	}
@@ -1256,7 +1256,7 @@ void write_port_forwarding(FILE *fp, char *config, char *lan_ip)
 			{
 				wan_port = nvram_get_int("misc_httpport_x") ? : 8080;
 				fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n",
-					wan_port, lan_ip, /*nvram_get_int("http_lanport") ? :*/ 80);
+					wan_port, lan_ip, nvram_get_int("http_lanport") ? : 80);
 			}
 		}
 	}
@@ -1371,7 +1371,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		int dst_port;
 
 		if(nvram_get_int("atcover_sip_type") == 1)
-			dst_port = 80;
+			dst_port = nvram_get_int("http_lanport") ? : 80;
 		else
 			dst_port = 18017;
 
@@ -1892,7 +1892,7 @@ void redirect_setting(void)
 			int dst_port;
 
 			if(nvram_get_int("atcover_sip_type") == 1)
-				dst_port = 80;
+				dst_port = nvram_get_int("http_lanport") ? : 80;
 			else
 				dst_port = 18017;
 
@@ -1950,7 +1950,7 @@ static void write_access_restriction(FILE *fp)
 		if (en != 1)
 #endif
 		{
-			http_port = 80;
+			http_port = nvram_get_int("http_lanport") ? : 80;
 		}
 		if (http_port != 0 && https_port != 0)
 			snprintf(webports, sizeof(webports), "%d,%d", http_port, https_port);
@@ -2058,7 +2058,7 @@ start_default_filter(int lanunit)
 
 		fprintf(fp, "-A INPUT -i %s -m mark --mark %s -d %s -p tcp -m multiport --dport 23,%d,%d,9999 -j DROP\n",
 				lan_if, BIT_RES_GUI, nvram_safe_get("lan_ipaddr"),
-				/*nvram_get_int("http_lanport") ? :*/ 80,
+				nvram_get_int("http_lanport") ? : 80,
 				nvram_get_int("https_lanport") ? : 443);
 	}
 #endif
@@ -2333,7 +2333,7 @@ TRACE_PT("writing Parental Control\n");
 
 		fprintf(fp, "-A INPUT -i %s -m mark --mark %s -d %s -p tcp -m multiport --dport 23,%d,%d,9999 -j DROP\n",
 				lan_if, BIT_RES_GUI, lan_ip,
-				/*nvram_get_int("http_lanport") ? :*/ 80,
+				nvram_get_int("http_lanport") ? : 80,
 				nvram_get_int("https_lanport") ? : 443);
 	}
 #endif
@@ -2406,7 +2406,7 @@ TRACE_PT("writing Parental Control\n");
 #endif
 			{
 				fprintf(fp, "-A INPUT -m conntrack --ctstate DNAT -p tcp -m tcp -d %s --dport %d -j %s\n",
-					lan_ip, /*nvram_get_int("http_lanport") ? :*/ 80, logaccept);
+					lan_ip, nvram_get_int("http_lanport") ? : 80, logaccept);
 			}
 		}
 
@@ -3299,7 +3299,7 @@ TRACE_PT("writing Parental Control\n");
 
 		fprintf(fp, "-A INPUT -i %s -m mark --mark %s -d %s -p tcp -m multiport --dport 23,%d,%d,9999 -j DROP\n",
 				lan_if, BIT_RES_GUI, lan_ip,
-				/*nvram_get_int("http_lanport") ? :*/ 80,
+				nvram_get_int("http_lanport") ? : 80,
 				nvram_get_int("https_lanport") ? : 443);
 	}
 #endif
@@ -3408,7 +3408,7 @@ TRACE_PT("writing Parental Control\n");
 #endif
 			{
 				fprintf(fp, "-A INPUT -m conntrack --ctstate DNAT -p tcp -m tcp -d %s --dport %d -j %s\n",
-					lan_ip, /*nvram_get_int("http_lanport") ? :*/ 80, logaccept);
+					lan_ip, nvram_get_int("http_lanport") ? : 80, logaccept);
 			}
 		}
 

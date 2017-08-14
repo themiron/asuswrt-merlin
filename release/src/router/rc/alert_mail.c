@@ -200,9 +200,26 @@ void am_send_mail(int type, char *path)
 #endif
 	if(type == CONFIRM_MAIL)
 	{
+		char *proto;
+		int port;
+
+#ifdef RTCONFIG_HTTPS
+		if (nvram_get_int("http_enable") == 1) {
+			proto = "https";
+			if ((port = nvram_get_int("https_lanport")) == 443)
+				port = 0;
+		} else
+#endif
+		{
+			proto = "http";
+			if ((port = nvram_get_int("http_lanport")) == 80)
+				port = 0;
+		}
+
 		fprintf(fp, "Dear user,\n\n");
 		fprintf(fp, "This is for your mail address confirmation and please click below link to go back firmware page for configuration.\n\n");
-		fprintf(fp, "http://router.asus.com/\n\n");
+		fprintf(fp, port ? "%s://%s:%d/\n\n" : "%s://%s/\n\n",
+			proto, DUT_DOMAIN_NAME, port);
 		fprintf(fp, "Thanks,\n");
 		fprintf(fp, "ASUSTeK Computer Inc.\n");
 		logmessage("ALERT MAIL", "Confirm Mail");

@@ -1487,7 +1487,7 @@ void http_login(unsigned int ip, char *url) {
 	char login_ipstr[32], login_timestampstr[32];
 
 	if ((http_port != SERVER_PORT
-/*	  && http_port != nvram_get_int("http_lanport")*/
+	  && http_port != nvram_get_int("http_lanport")
 #ifdef RTCONFIG_HTTPS
 	  && http_port != SERVER_PORT_SSL
 	  && http_port != nvram_get_int("https_lanport")
@@ -1517,7 +1517,7 @@ void http_login(unsigned int ip, char *url) {
 int http_login_check(void)
 {
 	if ((http_port != SERVER_PORT
-/*	  && http_port != nvram_get_int("http_lanport")*/
+	  && http_port != nvram_get_int("http_lanport")
 #ifdef RTCONFIG_HTTPS
 	  && http_port != SERVER_PORT_SSL
 	  && http_port != nvram_get_int("https_lanport")
@@ -1578,7 +1578,7 @@ void http_logout(unsigned int ip, char *cookies, int fromapp_flag)
 int is_auth(void)
 {
 	if (http_port==SERVER_PORT ||
-/*	    http_port==nvram_get_int("http_lanport") ||*/
+	    http_port==nvram_get_int("http_lanport") ||
 #ifdef RTCONFIG_HTTPS
 	    http_port==SERVER_PORT_SSL ||
 	    http_port==nvram_get_int("https_lanport") ||

@@ -348,7 +348,8 @@ function applyRule(){
 				document.form.misc_httpport_x.disabled = true;
 		}
 
-		if(document.form.https_lanport.value != '<% nvram_get("https_lanport"); %>' 
+		if(document.form.http_lanport.value != '<% nvram_get("http_lanport"); %>' 
+				|| document.form.https_lanport.value != '<% nvram_get("https_lanport"); %>' 
 				|| document.form.http_enable.value != '<% nvram_get("http_enable"); %>'
 				|| document.form.misc_httpport_x.value != '<% nvram_get("misc_httpport_x"); %>'
 				|| document.form.misc_httpsport_x.value != '<% nvram_get("misc_httpsport_x"); %>'
@@ -364,7 +365,7 @@ function applyRule(){
 				if(isFromWAN)
 					document.form.flag.value = "http://" + location.hostname + ":" + document.form.misc_httpport_x.value;
 				else
-					document.form.flag.value = "http://" + location.hostname;
+					document.form.flag.value = "http://" + location.hostname + ":" + document.form.http_lanport.value;
 			}
 			else if(document.form.http_enable.value == "1"){	//HTTPS
 				if(isFromWAN)
@@ -382,7 +383,7 @@ function applyRule(){
 					if(isFromWAN)
 						document.form.flag.value = "http://" + location.hostname + ":" + document.form.misc_httpport_x.value;
 					else
-						document.form.flag.value = "http://" + location.hostname;
+						document.form.flag.value = "http://" + location.hostname + ":" + document.form.http_lanport.value;
 				}
 			}   
 		}
@@ -530,8 +531,8 @@ function validForm(){
 	}	
 
 
-	/*if (!validator.range(document.form.http_lanport, 1, 65535))
-		return false;*/
+	if (!validator.range(document.form.http_lanport, 1, 65535))
+		/*return false;*/ document.form.http_lanport = 80;
 	if (HTTPS_support && !validator.range(document.form.https_lanport, 1, 65535) && !tmo_support)
 		return false;
 		
@@ -1358,6 +1359,7 @@ function upload_cert_key(){
 <input type="hidden" name="btn_ez_mode" value="<% nvram_get("btn_ez_mode"); %>">
 <input type="hidden" name="reboot_schedule" value="<% nvram_get_x("","reboot_schedule"); %>" disabled>
 <input type="hidden" name="reboot_schedule_enable" value="<% nvram_get_x("","reboot_schedule_enable"); %>">
+<input type="hidden" name="http_lanport" value="<% nvram_get("http_lanport"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
