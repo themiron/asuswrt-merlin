@@ -427,6 +427,28 @@ static int ohci_pci_resume(struct usb_hcd *hcd, bool hibernated)
 
 #endif	/* CONFIG_PM */
 
+#ifdef CONFIG_BCM47XX
+static int ohci_map_urb_for_dma(struct usb_hcd *hcd, struct urb *urb, gfp_t mem_flags)
+{
+	int ret;
+
+	ret = bcm_alloc_dma_aligned_buffer(urb, mem_flags);
+	if (ret)
+		return ret;
+
+	ret = usb_hcd_map_urb_for_dma(hcd, urb, mem_flags);
+	if (ret)
+		bcm_free_dma_aligned_buffer(urb);
+
+	return ret;
+}
+
+static void ohci_unmap_urb_for_dma(struct usb_hcd *hcd, struct urb *urb)
+{
+	usb_hcd_unmap_urb_for_dma(hcd, urb);
+	bcm_free_dma_aligned_buffer(urb);
+}
+#endif /* CONFIG_BCM47XX */
 
 /*-------------------------------------------------------------------------*/
 
@@ -459,6 +481,10 @@ static const struct hc_driver ohci_pci_hc_driver = {
 	 */
 	.urb_enqueue =		ohci_urb_enqueue,
 	.urb_dequeue =		ohci_urb_dequeue,
+#ifdef CONFIG_BCM47XX
+	.map_urb_for_dma =	ohci_map_urb_for_dma,
+	.unmap_urb_for_dma =	ohci_unmap_urb_for_dma,
+#endif /* CONFIG_BCM47XX */
 	.endpoint_disable =	ohci_endpoint_disable,
 
 	/*

@@ -1145,6 +1145,15 @@ static void hcd_free_coherent(struct usb_bus *bus, dma_addr_t *dma_handle,
 static int map_urb_for_dma(struct usb_hcd *hcd, struct urb *urb,
 			   gfp_t mem_flags)
 {
+	if (hcd->driver->map_urb_for_dma)
+		return hcd->driver->map_urb_for_dma(hcd, urb, mem_flags);
+	else
+		return usb_hcd_map_urb_for_dma(hcd, urb, mem_flags);
+}
+
+int usb_hcd_map_urb_for_dma(struct usb_hcd *hcd, struct urb *urb,
+			    gfp_t mem_flags)
+{
 	enum dma_data_direction dir;
 	int ret = 0;
 
@@ -1200,8 +1209,17 @@ static int map_urb_for_dma(struct usb_hcd *hcd, struct urb *urb,
 	}
 	return ret;
 }
+EXPORT_SYMBOL_GPL(usb_hcd_map_urb_for_dma);
 
 static void unmap_urb_for_dma(struct usb_hcd *hcd, struct urb *urb)
+{
+	if (hcd->driver->unmap_urb_for_dma)
+		hcd->driver->unmap_urb_for_dma(hcd, urb);
+	else
+		usb_hcd_unmap_urb_for_dma(hcd, urb);
+}
+
+void usb_hcd_unmap_urb_for_dma(struct usb_hcd *hcd, struct urb *urb)
 {
 	enum dma_data_direction dir;
 
@@ -1236,6 +1254,110 @@ static void unmap_urb_for_dma(struct usb_hcd *hcd, struct urb *urb)
 					dir);
 	}
 }
+EXPORT_SYMBOL_GPL(usb_hcd_unmap_urb_for_dma);
+
+#ifdef CONFIG_BCM47XX
+#include <bcmutils.h>
+#include <siutils.h>
+#include <bcmdefs.h>
+#include <bcmdevs.h>
+
+typedef unsigned long uintptr_t;
+
+/* Global SB handle */
+extern si_t *bcm947xx_sih;
+#define sih bcm947xx_sih
+
+#define BCM_USB_DMA_ALIGN 4
+
+struct dma_aligned_buffer {
+	void *kmalloc_ptr;
+	void *old_xfer_buffer;
+	u8 data[0];
+};
+
+void bcm_free_dma_aligned_buffer(struct urb *urb)
+{
+	struct dma_aligned_buffer *temp;
+	size_t length;
+
+	if (!(urb->transfer_flags & URB_ALIGNED_TEMP_BUFFER))
+		return;
+
+	temp = container_of(urb->transfer_buffer,
+		struct dma_aligned_buffer, data);
+
+	if (usb_urb_dir_in(urb)) {
+		if (usb_pipeisoc(urb->pipe))
+			length = urb->transfer_buffer_length;
+		else
+			length = urb->actual_length;
+
+		memcpy(temp->old_xfer_buffer, temp->data, length);
+	}
+	urb->transfer_buffer = temp->old_xfer_buffer;
+	kfree(temp->kmalloc_ptr);
+
+	urb->transfer_flags &= ~URB_ALIGNED_TEMP_BUFFER;
+}
+EXPORT_SYMBOL_GPL(bcm_free_dma_aligned_buffer);
+
+int bcm_alloc_dma_aligned_buffer(struct urb *urb, gfp_t mem_flags)
+{
+	struct dma_aligned_buffer *temp, *kmalloc_ptr;
+	size_t kmalloc_size;
+	int length;
+
+#ifdef __mips__
+	if (CHIPID(sih->chip) != BCM4706_CHIP_ID &&
+	    CHIPID(sih->chip) != BCM4716_CHIP_ID)
+		return 0;
+#else
+	if (!BCM4707_CHIP(sih->chip))
+		return 0;
+#endif
+
+	if (urb->num_sgs || urb->sg ||
+	    urb->transfer_buffer_length == 0)
+		return 0;
+
+	length = (uintptr_t)urb->transfer_buffer & (BCM_USB_DMA_ALIGN - 1);
+	if (!length)
+		return 0;
+
+	/* Skip unrelated outgoing data */
+	if (usb_urb_dir_out(urb)) {
+		int maxp = usb_maxpacket(urb->dev, urb->pipe, usb_pipeout(urb->pipe));
+		if (maxp == 0)
+			return 0;
+		length = (urb->transfer_buffer_length % maxp) - length;
+		if (length < 1 || length > 3)
+			return 0;
+	}
+
+	/* Allocate a buffer with enough padding for alignment */
+	kmalloc_size = urb->transfer_buffer_length +
+		sizeof(struct dma_aligned_buffer) + BCM_USB_DMA_ALIGN - 1;
+
+	kmalloc_ptr = kmalloc(kmalloc_size, mem_flags);
+	if (!kmalloc_ptr)
+		return -ENOMEM;
+
+	/* Position our struct dma_aligned_buffer such that data is aligned */
+	temp = PTR_ALIGN(kmalloc_ptr + 1, BCM_USB_DMA_ALIGN) - 1;
+	temp->kmalloc_ptr = kmalloc_ptr;
+	temp->old_xfer_buffer = urb->transfer_buffer;
+	if (usb_urb_dir_out(urb))
+		memcpy(temp->data, urb->transfer_buffer,
+		       urb->transfer_buffer_length);
+	urb->transfer_buffer = temp->data;
+
+	urb->transfer_flags |= URB_ALIGNED_TEMP_BUFFER;
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(bcm_alloc_dma_aligned_buffer);
+#endif
 
 /*-------------------------------------------------------------------------*/
 
