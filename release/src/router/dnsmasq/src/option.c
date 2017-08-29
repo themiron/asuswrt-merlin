@@ -2450,7 +2450,7 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	serv = newlist;
 	while (serv->next)
 	  {
-	    serv->next->flags = serv->flags;
+	    serv->next->flags |= serv->flags & ~SERV_TYPE;
 	    serv->next->addr = serv->addr;
 	    serv->next->source_addr = serv->source_addr;
 	    strcpy(serv->next->interface, serv->interface);
