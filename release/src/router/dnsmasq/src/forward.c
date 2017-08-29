@@ -205,7 +205,8 @@ static unsigned int search_servers(time_t now, struct all_addr **addrpp, unsigne
       }
   
   if (flags == 0 && !(qtype & (F_QUERY | F_DNSSECOK)) && 
-      option_bool(OPT_NODOTS_LOCAL) && !strchr(qdomain, '.') && namelen != 0)
+      option_bool(OPT_NODOTS_LOCAL) && !strchr(qdomain, '.') && namelen != 0 &&
+      !(*type & SERV_FOR_NODOTS))
     /* don't forward A or AAAA queries for simple names, except the empty name */
     flags = F_NOERR;
   
